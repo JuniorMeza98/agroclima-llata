@@ -17,13 +17,40 @@ export default function App() {
   const LAT = -9.5489;
   const LON = -76.8181;
 
-  useEffect(() => {
-    // Consulta ampliada a Open-Meteo para obtener datos diarios
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&daily=temperature_2m_min,temperature_2m_max,weathercode&timezone=auto`)
-      .then((res) => res.json())
-      .then((data) => setClima(data));
+  // Función para enviar mensaje a Telegram
+  const enviarAlertaTelegram = async (mensaje) => {
+    const token = import.meta.env.VITE_TELEGRAM_TOKEN;
+    const chatId = import.meta.env.VITE_TELEGRAM_CHAT_ID;
 
-    obtenerIncidencias();
+    if (!token || !chatId) return;
+
+    try {
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: mensaje,
+          parse_mode: 'HTML'
+        })
+      });
+    } catch (error) {
+      console.error('Error enviando notificación a Telegram:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&daily=temperature_2m_min,temperature_2m_max&timezone=auto`)
+      .then((res) => res.json())
+      .then((data) => {
+        setClima(data);
+        
+        const tempActual = data?.current_weather?.temperature;
+        // Si detecta helada crítica, envía un aviso al grupo de Telegram
+        if (tempActual <= 2) {
+          enviarAlertaTelegram(`<b>¡ALERTA DE HELADA EN LLATA!</b>\n\nTemperatura actual: <b>${tempActual} °C</b>.\nSe recomienda activar los sistemas de prevención en parcelas de papa, maíz y cebada.`);
+        }
+      });
   }, []);
 
   const obtenerIncidencias = async () => {
