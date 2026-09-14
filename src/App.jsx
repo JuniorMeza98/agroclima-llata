@@ -12,6 +12,7 @@ export default function App() {
   const [tipoAlerta, setTipoAlerta] = useState('Helada');
   const [descripcion, setDescripcion] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [imagen, setImagen] = useState(null);
 
   const LAT = -9.5489;
   const LON = -76.8181;
@@ -35,12 +36,39 @@ export default function App() {
     e.preventDefault();
     setEnviando(true);
 
+    let imagenUrlFinal = null;
+
+    // Subir la imagen a Supabase Storage si el usuario adjuntó una
+    if (imagen) {
+      const fileExt = imagen.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `parcelas/${fileName}`;
+
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from('fotos_incidencias')
+        .upload(filePath, imagen);
+
+      if (storageError) {
+        alert('Error al subir la imagen');
+        setEnviando(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('fotos_incidencias')
+        .getPublicUrl(filePath);
+
+      imagenUrlFinal = urlData.publicUrl;
+    }
+
+    // Guardar en la tabla incidencias incluyendo la URL de la imagen
     const { error } = await supabase.from('incidencias').insert([
       {
         sector: sector,
         tipo_cultivo: tipoCultivo,
         tipo_alerta: tipoAlerta,
         descripcion: descripcion,
+        imagen_url: imagenUrlFinal
       },
     ]);
 
@@ -50,7 +78,8 @@ export default function App() {
       alert('¡Alerta registrada exitosamente!');
       setSector('');
       setDescripcion('');
-      obtenerIncidencias(); // Recargar lista de alertas
+      setImagen(null);
+      obtenerIncidencias();
     }
     setEnviando(false);
   };
@@ -126,6 +155,13 @@ export default function App() {
             rows={3}
             style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
           />
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(e) => setImagen(e.target.files[0])}
+            style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
           <button
             type="submit"
             disabled={enviando}
@@ -146,6 +182,13 @@ export default function App() {
             <div key={item.id} style={{ backgroundColor: 'white', borderLeft: '4px solid #f57c00', padding: '10px', borderRadius: '4px', marginBottom: '8px' }}>
               <strong>{item.sector}</strong> - <span style={{ color: '#d32f2f' }}>{item.tipo_alerta}</span> ({item.tipo_cultivo})
               <p style={{ margin: '5px 0 0 0', fontSize: '13px' }}>{item.descripcion}</p>
+              {item.imagen_url && (
+            <img
+              src={item.imagen_url}
+              alt="Evidencia"
+              style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '4px', marginTop: '8px' }}
+            />
+          )}
             </div>
           ))
         )}
