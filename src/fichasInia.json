@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "cultivo": "Papa",
+    "evento": "Helada",
+    "medidas_preventivas": "Aplicar riego por aspersión antes del anochecer. Usar abono foliar rico en potasio.",
+    "medidas_recuperacion": "Aplicar biol o bioestimulantes foliares a primera hora de la mañana para reducir la deshidratación del tejido."
+  },
+  {
+    "id": 2,
+    "cultivo": "Maíz",
+    "evento": "Granizada",
+    "medidas_preventivas": "Mantener surcos limpios para un drenaje rápido y evitar encharcamiento.",
+    "medidas_recuperacion": "Realizar aporcado ligero y aplicar fertilizante nitrogenado para estimular el rebrote."
+  },
+  {
+    "id": 3,
+    "cultivo": "Cebada",
+    "evento": "Helada / Sequía corta",
+    "medidas_preventivas": "Canchas de humo / humo controlado con materia orgánica húmeda en los bordes del lote.",
+    "medidas_recuperacion": "Riego de auxilio si se cuenta con disponibilidad hídrica."
+  }
+]
