@@ -18,12 +18,11 @@ export default function App() {
   const LON = -76.8181;
 
   useEffect(() => {
-    // Consultar API Climatológica
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true`)
+    // Consulta ampliada a Open-Meteo para obtener datos diarios
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&daily=temperature_2m_min,temperature_2m_max,weathercode&timezone=auto`)
       .then((res) => res.json())
       .then((data) => setClima(data));
 
-    // Cargar incidencias registradas en Supabase
     obtenerIncidencias();
   }, []);
 
@@ -101,7 +100,40 @@ export default function App() {
           <Thermometer color={tempActual <= 2 ? 'red' : 'green'} /> Temperatura Actual: {tempActual !== undefined ? `${tempActual} °C` : 'Cargando...'}
         </p>
       </div>
+      {/* Pronóstico a 7 Días */}
+        <div style={{ marginTop: '20px', backgroundColor: 'white', padding: '15px', borderRadius: '8px' }}>
+          <h3 style={{ fontSize: '16px', margin: '0 0 10px 0' }}>Pronóstico Mínimo (Próximos 7 días)</h3>
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px' }}>
+            {clima?.daily?.time?.map((fecha, index) => {
+              const tempMin = clima.daily.temperature_2m_min[index];
+              const esRiesgoSemana = tempMin <= 2;
 
+              return (
+                <div
+                  key={fecha}
+                  style={{
+                    minWidth: '75px',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    textAlign: 'center',
+                    backgroundColor: esRiesgoSemana ? '#ffebee' : '#f1f8e9',
+                    border: esRiesgoSemana ? '1px solid #ef5350' : '1px solid #c8e6c9',
+                  }}
+                >
+                  <small style={{ display: 'block', fontSize: '11px', fontWeight: 'bold' }}>
+                    {new Date(fecha + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' })}
+                  </small>
+                  <span style={{ fontSize: '16px', fontWeight: 'bold', color: esRiesgoSemana ? '#d32f2f' : '#2e7d32', display: 'block', margin: '5px 0' }}>
+                    {tempMin} °C
+                  </span>
+                  <small style={{ fontSize: '10px', color: esRiesgoSemana ? '#c62828' : '#555' }}>
+                    {esRiesgoSemana ? '¡Riesgo!' : 'Normal'}
+                  </small>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       {/* Mapa Interactivo de Llata */}
       <div style={{ marginTop: '20px', backgroundColor: 'white', padding: '15px', borderRadius: '8px' }}>
         <h3 style={{ fontSize: '16px', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
